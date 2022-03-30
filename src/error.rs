@@ -1,9 +1,12 @@
 use std::fmt;
+use std::result;
+
+pub type Result<T> = result::Result<T, Error>;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum ErrorKind {
     Io,
-    Value,
+    RequestError,
     Other,
     Unexpected,
 }
@@ -32,8 +35,8 @@ impl Error {
         Error::new(ErrorKind::Io, msg)
     }
 
-    pub fn new_value(msg: &str) -> Error {
-        Error::new(ErrorKind::Value, msg)
+    pub fn new_request_error(msg: &str) -> Error {
+        Error::new(ErrorKind::RequestError, msg)
     }
 
     pub fn new_other(msg: &str) -> Error {
@@ -49,7 +52,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self.kind {
             ErrorKind::Io => write!(f, "Io error: {}", self.msg),
-            ErrorKind::Value => write!(f, "Value error: {}", self.msg),
+            ErrorKind::RequestError => write!(f, "Request error: {}", self.msg),
             ErrorKind::Other => write!(f, "Other error: {}", self.msg),
             ErrorKind::Unexpected => write!(f, "Unexpected error: {}", self.msg),
         }

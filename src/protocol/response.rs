@@ -15,9 +15,9 @@ pub const UNKNOWN_ERROR: &str = "Unknown error";
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Response {
-    status_code: StatusCode,
-    status_line: String,
-    content: Option<Bytes>,
+    pub status_code: StatusCode,
+    pub status_line: String,
+    pub content: Option<Bytes>,
 }
 
 impl Default for Response {
@@ -34,7 +34,7 @@ impl fmt::Display for Response {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "Response with status code: {:?}, content-type: {:?}, and content-lenght: {}",
+            "{:?} {:?} content lenght: {}",
             self.status_code,
             self.status_line,
             self.content.to_owned().map_or(0, |c| { c.len() })
@@ -67,10 +67,10 @@ impl Response {
         Response::new(StatusCode::Redirect, location, None)
     }
 
-    pub fn render_header(&self) -> Bytes {
+    pub fn render_header(&self) -> Vec<u8> {
         let line = format!("{} {}\r\n", self.status_code.int_value(), self.status_line);
 
-        Bytes::copy_from_slice(&(line.as_bytes())[..])
+        line.as_bytes().to_vec()
     }
 }
 
@@ -79,7 +79,7 @@ impl Response {
 #[test]
 fn render_header_client_error() {
     let result = Response::new_client_error("error".to_string()).render_header();
-    let expected = Bytes::from(&b"4 error\r\n"[..]);
+    let expected = &b"4 error\r\n"[..];
 
     assert_eq!(expected, result)
 }
@@ -87,7 +87,7 @@ fn render_header_client_error() {
 #[test]
 fn render_header_server_error() {
     let result = Response::new_server_error("I'm down".to_string()).render_header();
-    let expect = Bytes::from(&"5 I'm down\r\n"[..]);
+    let expect = &b"5 I'm down\r\n"[..];
 
     assert_eq!(result, expect);
 }
@@ -95,7 +95,7 @@ fn render_header_server_error() {
 #[test]
 fn render_header_redirect() {
     let result = Response::new_redirect("/new-location".to_string()).render_header();
-    let expect = Bytes::from(&"3 /new-location\r\n"[..]);
+    let expect = &b"3 /new-location\r\n"[..];
 
     assert_eq!(result, expect);
 }
