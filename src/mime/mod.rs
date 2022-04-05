@@ -1,3 +1,7 @@
-pub const OCTET: &str = "application/octet-stream";
-pub const GEMINI: &str = "text/gemini";
-pub const PLAIN: &str = "text/plain";
+use mime_guess;
+
+pub fn filename_to_mime(filename: String) -> String {
+    let mime = mime_guess::from_path(filename.as_str());
+
+    mime.first_or_octet_stream().to_string()
+}

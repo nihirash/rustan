@@ -2,14 +2,17 @@ use crate::error::{Error, Result};
 use crate::protocol::{EMPTY_REQ, PARSE_ERR, WRONG_DATA_SIZE};
 
 use bytes::Bytes;
+use log::debug;
 use std::fmt;
+use url::Url;
+use urlencoding::decode;
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Request {
-    host: String,
-    locator: String,
-    data_len: usize,
-    data: Option<Bytes>,
+    pub host: String,
+    pub locator: String,
+    pub data_len: usize,
+    pub data: Option<Bytes>,
 }
 
 impl Default for Request {
@@ -51,6 +54,13 @@ impl Request {
                 .get(1)
                 .ok_or(Error::new_unexpected("Locator lost from string"))?;
 
+            let url = Url::parse(format!("spartan://{}{}", host_str, locator_str).as_str())
+                .map_err(|e| Error::new_request_error(e.to_string().as_str()))?;
+
+            let real_path = decode(url.path().to_string().as_str())
+                .map(|s| s.to_string())
+                .map_err(|e| Error::new_request_error(e.to_string().as_str()))?;
+
             let size_value: usize = tokens
                 .get(2)
                 .ok_or(Error::new_unexpected("Data len lost from string"))?
@@ -58,9 +68,14 @@ impl Request {
                 .parse::<usize>()
                 .map_err(|_| Error::new_request_error(PARSE_ERR))?;
 
+            debug!(
+                "Decoded host: {}, path: {}, data_len: {}",
+                host_str, real_path, size_value
+            );
+
             Result::Ok(Request {
                 host: host_str.to_string(),
-                locator: locator_str.to_string(),
+                locator: real_path,
                 data_len: size_value,
                 data: None,
             })
@@ -94,6 +109,21 @@ impl Request {
 // ----------------- Tests section --------------------
 
 #[test]
+fn create_from_request_path_under_root() {
+    let result =
+        Request::create_from_request_line("my-good-host.com /../../../../etc/passwd 0".to_string());
+    let except = Result::Ok(Request {
+        host: "my-good-host.com".to_string(),
+        locator: "/etc/passwd".to_string(),
+        data_len: 0,
+        data: None,
+    });
+
+    assert!(result.is_ok());
+    assert_eq!(result, except);
+}
+
+#[test]
 fn create_from_request_line_empty_line() {
     let result = Request::create_from_request_line("".to_string());
     let expect = Result::Err(Error::new_request_error(EMPTY_REQ));
@@ -113,10 +143,11 @@ fn create_from_request_line_wrong_data_len() {
 
 #[test]
 fn create_from_request_line_zero_body() {
-    let result = Request::create_from_request_line("my-good-host.com /resource 0".to_string());
+    let result =
+        Request::create_from_request_line("my-good-host.com /resource%20test 0".to_string());
     let except = Result::Ok(Request {
         host: "my-good-host.com".to_string(),
-        locator: "/resource".to_string(),
+        locator: "/resource test".to_string(),
         data_len: 0,
         data: None,
     });

@@ -8,6 +8,7 @@ use tokio::{
     net::TcpStream,
 };
 
+/// From procotol spec
 const BUFFER_SIZE: usize = 4096;
 
 #[derive(Debug)]
