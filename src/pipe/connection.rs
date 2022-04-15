@@ -1,10 +1,9 @@
-use std::io::Cursor;
-
 use crate::error::{Error, Result};
-use bytes::BytesMut;
+use bytes::{Bytes, BytesMut};
 use log::debug;
+use std::pin::Pin;
 use tokio::{
-    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt},
+    io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
     net::TcpStream,
 };
 
@@ -13,30 +12,74 @@ const BUFFER_SIZE: usize = 4096;
 
 #[derive(Debug)]
 pub struct Connection {
-    stream: TcpStream,
-    buffer: BytesMut,
+    reader: BufReader<&'static mut TcpStream>,
+    writer: BufWriter<&'static mut TcpStream>,
+    _stream: Pin<Box<TcpStream>>,
 }
-
+#[allow(mutable_transmutes)]
 impl Connection {
-    pub fn new(stream: TcpStream) -> Connection {
-        Connection {
-            stream: stream,
-            buffer: BytesMut::with_capacity(BUFFER_SIZE),
+    pub fn new(stream: TcpStream) -> Self {
+        let pin = Box::pin(stream);
+
+        unsafe {
+            Self {
+                reader: BufReader::new(std::mem::transmute(&*pin)),
+                writer: BufWriter::new(std::mem::transmute(&*pin)),
+                _stream: pin,
+            }
         }
+    }
+
+    fn get_reader(&mut self) -> &mut BufReader<&mut TcpStream> {
+        unsafe { std::mem::transmute(&self.reader) }
+    }
+
+    fn get_writer(&mut self) -> &mut BufWriter<&mut TcpStream> {
+        unsafe { std::mem::transmute(&self.writer) }
+    }
+
+    /// Read N bytes from TcpStream
+    pub async fn read_count(&mut self, count: usize) -> Result<Bytes> {
+        let mut left = count;
+        let mut buffer: Vec<u8> = Vec::new();
+
+        while left > 0 {
+            debug!("Reading request data. {} bytes left", left);
+            let datum = self.read_chunk(left).await?;
+
+            if datum.len() == 0 {
+                break;
+            }
+
+            let mut vectored = Vec::from(&datum[..]);
+            buffer.append(&mut vectored);
+
+            left -= datum.len();
+        }
+
+        Ok(Bytes::from(buffer))
+    }
+
+    /// Reading not more than N bytes.
+    /// Usually you'll read from socket less count
+    async fn read_chunk(&mut self, count: usize) -> Result<Bytes> {
+        let mut buffer: Vec<u8> = Vec::with_capacity(count);
+
+        self.get_reader()
+            .take(count.try_into().unwrap())
+            .read_buf(&mut buffer)
+            .await
+            .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+
+        Ok(Bytes::from(buffer))
     }
 
     /// Function for reading request
     pub async fn read_line(&mut self) -> Result<String> {
         let mut buffer: Vec<u8> = Vec::with_capacity(BUFFER_SIZE);
 
-        self.stream
-            .read_buf(&mut self.buffer)
-            .await
-            .map_err(|e| Error::new_io(e.to_string().as_str()))?;
-
-        let mut reader = Cursor::new(&self.buffer[..]);
-
-        let count = reader
+        let count = self
+            .get_reader()
             .read_until(10u8, &mut buffer) // Cause CRLF is ending
             .await
             .map_err(|e| Error::new_io(e.to_string().as_str()))?;
@@ -51,14 +94,19 @@ impl Connection {
     /// Output buffer to socket
     pub async fn write_buf(&mut self, mut buf: BytesMut) -> Result<()> {
         let bytes = self
-            .stream
+            .get_writer()
             .write_buf(&mut buf)
+            .await
+            .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+
+        self.get_writer()
+            .flush()
             .await
             .map_err(|e| Error::new_io(e.to_string().as_str()))?;
 
         debug!(
             "Connection with {}. {} bytes sent",
-            self.stream.peer_addr().unwrap(),
+            self._stream.peer_addr().unwrap(),
             bytes
         );
 

@@ -13,5 +13,6 @@ bytes = "1.1.0"
 int-enum = "0.4.0"
 url = "2.2.2"
 urlencoding = "2.1.0"
+is_executable = "1.0.1"
 mime_guess = "2.0.4"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1.17.0", features = ["full"] }

@@ -44,5 +44,5 @@ async fn main() -> Result<()> {
         Ok(_) => (),
     };
 
-    Result::Ok(())
+    Ok(())
 }

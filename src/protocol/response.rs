@@ -11,6 +11,17 @@ pub enum StatusCode {
     ServerError = 5,
 }
 
+impl StatusCode {
+    pub fn from_number(number: u8) -> StatusCode {
+        match number {
+            2 => StatusCode::Success,
+            3 => StatusCode::Redirect,
+            4 => StatusCode::ClientError,
+            _ => StatusCode::ServerError,
+        }
+    }
+}
+
 pub const UNKNOWN_ERROR: &str = "Unknown error";
 
 #[derive(Clone, Eq, PartialEq, Debug)]
