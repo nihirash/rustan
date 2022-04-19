@@ -6,4 +6,10 @@
 
 Project in early development state.
 
-It's even doesn't make anything.
+There will be first working version soon!
+
+## License
+
+I've licensed project by [Nihirash's Coffeeware License](LICENSE).
+
+Please respect it - it isn't hard.

@@ -17,6 +17,7 @@ pub struct Connection {
     writer: BufWriter<&'static mut TcpStream>,
     _stream: Pin<Box<TcpStream>>,
 }
+
 #[allow(mutable_transmutes)]
 impl Connection {
     pub fn new(stream: TcpStream) -> Self {
