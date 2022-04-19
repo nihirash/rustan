@@ -15,7 +15,7 @@ fn is_directory_locator(locator: String) -> bool {
 }
 
 pub fn get_root_dir() -> Result<PathBuf> {
-    env::current_dir().map_err(|e| Error::new_io(e.to_string().as_str()))
+    io_err!(env::current_dir())
 }
 
 async fn is_host_exists(host: String) -> Result<bool> {

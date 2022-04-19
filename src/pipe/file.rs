@@ -13,9 +13,7 @@ use std::process::{Command, Stdio};
 use tokio::fs;
 
 pub async fn read_file(path: PathBuf) -> Result<Vec<u8>> {
-    fs::read(path)
-        .await
-        .map_err(|e| Error::new_io(e.to_string().as_str()))
+    io_err!(fs::read(path).await)
 }
 
 async fn process_plain_file(file_path: PathBuf) -> Result<Response> {
@@ -36,22 +34,16 @@ async fn process_cgi(path: PathBuf, request: Request) -> Result<Response> {
 
     let data = request.data.unwrap_or(Bytes::new());
 
-    let result = Command::new(path.clone())
+    let result = io_err!(Command::new(path.clone())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .current_dir(path.parent().unwrap().as_os_str())
-        .spawn()
-        .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+        .spawn())?;
 
     let mut stdin = result.stdin.unwrap();
 
-    stdin
-        .write(&data[..])
-        .map_err(|e| Error::new_io(e.to_string().as_str()))?;
-
-    stdin
-        .flush()
-        .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+    io_err!(stdin.write(&data[..]))?;
+    io_err!(stdin.flush())?;
 
     drop(stdin);
 
@@ -63,9 +55,7 @@ async fn process_cgi(path: PathBuf, request: Request) -> Result<Response> {
     let mut status_code_b: Vec<u8> = Vec::with_capacity(2);
     let mut status_line: Vec<u8> = Vec::new();
 
-    reader
-        .read_until(32u8, &mut status_code_b)
-        .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+    io_err!(reader.read_until(32u8, &mut status_code_b))?;
 
     // align char numbers
     let status_code_num = *status_code_b.first().unwrap() - 48;
@@ -73,13 +63,10 @@ async fn process_cgi(path: PathBuf, request: Request) -> Result<Response> {
 
     io_err!(reader.read_until(10u8, &mut status_line))?;
 
-    let status_line_str = String::from_utf8(status_line)
-        .map(|s| s.trim_end().to_string())
-        .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+    let status_line_str =
+        io_err!(String::from_utf8(status_line).map(|s| s.trim_end().to_string()))?;
 
-    reader
-        .read_to_end(&mut buf)
-        .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+    io_err!(reader.read_to_end(&mut buf))?;
 
     Ok(Response::new(
         status_code,
