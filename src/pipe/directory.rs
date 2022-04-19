@@ -11,6 +11,7 @@ async fn process_directory_list(host: String, locator: String) -> Result<Respons
     let mut path = get_root_dir()?;
     path.push(host);
     path.push(&locator.as_str()[1..]);
+
     let mut file_path = path.clone();
     file_path.push(".listfiles");
 
@@ -23,8 +24,7 @@ async fn process_directory_list(host: String, locator: String) -> Result<Respons
     header.append(&mut nl);
 
     // It works and works faster than tokio::fs
-    std::fs::read_dir(path)
-        .map_err(|e| Error::new_io(e.to_string().as_str()))?
+    io_err!(std::fs::read_dir(path))?
         .filter(|f| f.as_ref().unwrap().file_name() != ".listfiles")
         .for_each(|f| {
             let entry = f.unwrap();

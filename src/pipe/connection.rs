@@ -1,4 +1,5 @@
 use crate::error::{Error, Result};
+
 use bytes::{Bytes, BytesMut};
 use log::debug;
 use std::pin::Pin;
@@ -64,12 +65,12 @@ impl Connection {
     /// Usually you'll read from socket less count
     async fn read_chunk(&mut self, count: usize) -> Result<Bytes> {
         let mut buffer: Vec<u8> = Vec::with_capacity(count);
-
-        self.get_reader()
-            .take(count.try_into().unwrap())
-            .read_buf(&mut buffer)
-            .await
-            .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+        io_err!(
+            self.get_reader()
+                .take(count.try_into().unwrap())
+                .read_buf(&mut buffer)
+                .await
+        )?;
 
         Ok(Bytes::from(buffer))
     }
@@ -78,31 +79,22 @@ impl Connection {
     pub async fn read_line(&mut self) -> Result<String> {
         let mut buffer: Vec<u8> = Vec::with_capacity(BUFFER_SIZE);
 
-        let count = self
-            .get_reader()
-            .read_until(10u8, &mut buffer) // Cause CRLF is ending
-            .await
-            .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+        let count = io_err!(
+            self.get_reader()
+                .read_until(10u8, &mut buffer) // Cause CRLF is ending
+                .await
+        )?;
 
         debug!("Request read: {} bytes", count);
 
-        String::from_utf8(buffer)
-            .map(|s| s.trim_end().to_string())
-            .map_err(|e| Error::new_io(e.to_string().as_str()))
+        io_err!(String::from_utf8(buffer).map(|s| s.trim_end().to_string()))
     }
 
     /// Output buffer to socket
     pub async fn write_buf(&mut self, mut buf: BytesMut) -> Result<()> {
-        let bytes = self
-            .get_writer()
-            .write_buf(&mut buf)
-            .await
-            .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+        let bytes = io_err!(self.get_writer().write_buf(&mut buf).await)?;
 
-        self.get_writer()
-            .flush()
-            .await
-            .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+        io_err!(self.get_writer().flush().await)?;
 
         debug!(
             "Connection with {}. {} bytes sent",

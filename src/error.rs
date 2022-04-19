@@ -58,3 +58,10 @@ impl fmt::Display for Error {
         }
     }
 }
+
+#[macro_export]
+macro_rules! io_err {
+    ($x: expr ) => {
+        $x.map_err(|e| Error::new_io(e.to_string().as_str()))
+    };
+}

@@ -71,9 +71,7 @@ async fn process_cgi(path: PathBuf, request: Request) -> Result<Response> {
     let status_code_num = *status_code_b.first().unwrap() - 48;
     let status_code = StatusCode::from_number(status_code_num);
 
-    reader
-        .read_until(10u8, &mut status_line)
-        .map_err(|e| Error::new_io(e.to_string().as_str()))?;
+    io_err!(reader.read_until(10u8, &mut status_line))?;
 
     let status_line_str = String::from_utf8(status_line)
         .map(|s| s.trim_end().to_string())
