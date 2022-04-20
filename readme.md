@@ -43,6 +43,16 @@ When RustAn starting it looking for `settings.toml` in current directory and in 
 
 Settings can be overrided via enviroment configuration.
 
+## Building
+
+You'll need cargo tool. 
+
+It can be installed via [rustup](https://rustup.rs).
+
+For development you can run it just via `RUST_LOG=debug cargo run`.
+
+For building release version use `cargo build --release`. Compiled binary will be in `target/release` directory.
+
 ## ToDo
  
  - [ ] Add redirects support
