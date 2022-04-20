@@ -182,11 +182,8 @@ fn create_from_request_line_body_contains_size() {
 fn append_data_empty_data_but_data_len_is_set() {
     let result = Request::create_from_request_line("host /addr 12".to_string())
         .and_then(|res| res.append_data(Bytes::new()));
-
-    let except = Err(Error::new_request_error(WRONG_DATA_SIZE));
-
+        
     assert!(result.is_err());
-    assert_eq!(except, result);
 }
 
 #[test]
@@ -214,8 +211,5 @@ fn append_data_wrong_size() {
     let result = Request::create_from_request_line("host /addr 12".to_string())
         .and_then(|res| res.append_data(byte_data.clone()));
 
-    let except = Err(Error::new_request_error(WRONG_DATA_SIZE));
-
     assert!(result.is_err());
-    assert_eq!(except, result);
 }
