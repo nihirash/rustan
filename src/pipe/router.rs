@@ -1,9 +1,10 @@
 use log::debug;
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 use tokio::fs;
 
-use crate::error::{Error, Result};
+use crate::configuration::SETTINGS;
+use crate::error::Result;
 use crate::pipe::directory::process_directory;
 use crate::pipe::file::process_file;
 use crate::protocol::request::Request;
@@ -14,12 +15,12 @@ fn is_directory_locator(locator: String) -> bool {
     locator.ends_with("/")
 }
 
-pub fn get_root_dir() -> Result<PathBuf> {
-    io_err!(env::current_dir())
+pub async fn get_root_dir() -> Result<PathBuf> {
+    Ok(PathBuf::from(SETTINGS.read().await.to_owned().root_path))
 }
 
 async fn is_host_exists(host: String) -> Result<bool> {
-    let mut path = get_root_dir()?;
+    let mut path = get_root_dir().await?;
     path.push(host.as_str());
 
     fs::read_dir(path)

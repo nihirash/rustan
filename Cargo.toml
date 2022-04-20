@@ -18,3 +18,5 @@ urlencoding = "2.1.0"
 is_executable = "1.0.1"
 mime_guess = "2.0.4"
 tokio = { version = "1.17.0", features = ["full"] }
+config = "0.13.1"
+lazy_static = "1.4.0"

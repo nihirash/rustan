@@ -1,0 +1,3 @@
+# This content will be served as "Example.com" server
+
+Hello, folks!

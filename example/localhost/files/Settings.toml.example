@@ -1,0 +1,9 @@
+# It's important!
+# use 0.0.0.0 host if you want serve not only for localhost
+host = "127.0.0.1:3000" 
+# Path to hosts with files
+# hostname "example.com" should be placed in "example.com" directory
+# There also fallback host "any" that will respond on any requests that haven't sepparate directory
+root-path = "./example"
+# Limit of upload data in bytes
+max-upload-size = 8388608

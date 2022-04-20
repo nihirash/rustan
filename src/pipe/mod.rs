@@ -3,9 +3,11 @@ pub mod directory;
 pub mod file;
 pub mod router;
 
-use crate::error::Result;
+use crate::configuration::SETTINGS;
+use crate::error::{Error, Result};
 use crate::protocol::request::Request;
 use crate::protocol::response::Response;
+use crate::protocol::UPLOAD_TOO_BIG;
 use core::future::Future;
 use router::route;
 
@@ -38,10 +40,22 @@ where
     }
 }
 
+async fn upload_data_size_check(request: Request) -> Result<Request> {
+    let max_allowed = SETTINGS.read().await.to_owned().max_upload_size;
+    if max_allowed >= request.data_len {
+        Ok(request)
+    } else {
+        Err(Error::new_request_error(UPLOAD_TOO_BIG))
+    }
+}
+
 pub async fn handler(connection: &mut Connection) -> Result<Response> {
     let req_string: String = connection.read_line().await?.trim_end().to_string();
 
-    let request = Request::create_from_request_line(req_string);
+    let request = match Request::create_from_request_line(req_string) {
+        Ok(r) => upload_data_size_check(r).await,
+        Err(r) => Err(r),
+    };
 
     let response = match request {
         Err(e) => Response::new_client_error(e.to_string()),

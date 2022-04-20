@@ -79,7 +79,7 @@ pub async fn process_file(request: Request) -> Result<Response> {
     let host = request.host.clone();
     let locator = request.locator.clone();
 
-    let mut file_path = get_root_dir()?;
+    let mut file_path = get_root_dir().await?;
     file_path.push(host);
     file_path.push(&locator.as_str()[1..]);
 

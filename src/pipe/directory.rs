@@ -8,7 +8,7 @@ use bytes::Bytes;
 use urlencoding::encode;
 
 async fn process_directory_list(host: String, locator: String) -> Result<Response> {
-    let mut path = get_root_dir()?;
+    let mut path = get_root_dir().await?;
     path.push(host);
     path.push(&locator.as_str()[1..]);
 
