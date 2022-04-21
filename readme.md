@@ -43,6 +43,12 @@ When RustAn starting it looking for `settings.toml` in current directory and in 
 
 Settings can be overrided via enviroment configuration.
 
+## Serving directories
+
+To serve directory you should create `.listfiles` file. 
+
+If it have some contents - it will be used as gemini header. 
+
 ## Building
 
 You'll need cargo tool. 
