@@ -93,14 +93,13 @@ impl Connection {
 
     /// Output buffer to socket
     pub async fn write_buf(&mut self, mut buf: BytesMut) -> Result<()> {
-        let bytes = io_err!(self.get_writer().write_buf(&mut buf).await)?;
-
+        io_err!(self.get_writer().write_all_buf(&mut buf).await)?;
         io_err!(self.get_writer().flush().await)?;
 
         debug!(
             "Connection with {}. {} bytes sent",
             self._stream.peer_addr().unwrap(),
-            bytes
+            buf.len()
         );
 
         Ok(())
