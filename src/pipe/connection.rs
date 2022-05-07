@@ -49,7 +49,7 @@ impl Connection {
             debug!("Reading request data. {} bytes left", left);
             let datum = self.read_chunk(left).await?;
 
-            if datum.len() == 0 {
+            if datum.is_empty() {
                 break;
             }
 

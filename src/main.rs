@@ -39,10 +39,9 @@ async fn main() -> Result<()> {
     let config = SETTINGS.read().await.to_owned();
     info!("Loaded config:\n{}", config);
 
-    match create_server(config).await {
-        Err(e) => error!("Server error: {}", e.to_string()),
-        Ok(_) => (),
-    };
+    if let Err(e) = create_server(config).await {
+        error!("Server error: {}", e.to_string())
+    }
 
     Ok(())
 }

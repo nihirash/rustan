@@ -25,9 +25,9 @@ impl Default for Configuration {
 impl Configuration {
     pub fn new(host: String, root_path: String, max_upload_size: usize) -> Self {
         Self {
-            host: host,
-            root_path: root_path,
-            max_upload_size: max_upload_size,
+            host,
+            root_path,
+            max_upload_size,
         }
     }
 
@@ -43,22 +43,22 @@ impl Configuration {
         let host = values
             .get("host")
             .map(String::from)
-            .unwrap_or("0.0.0.0:300".to_string());
+            .unwrap_or_else(|| "0.0.0.0:300".to_string());
 
-        let root = values
+        let root_path = values
             .get("server_root")
             .map(String::from)
-            .unwrap_or("./".to_string());
+            .unwrap_or_else(|| "./".to_string());
 
-        let max_upload = io_err!(values
+        let max_upload_size = io_err!(values
             .get("max_upload_size")
             .map(|s| s.parse::<usize>())
-            .unwrap_or(Ok(4096)))?;
+            .unwrap_or_else(|| Ok(4096)))?;
 
         Ok(Self {
-            host: host.to_string(),
-            root_path: root.to_string(),
-            max_upload_size: max_upload,
+            host,
+            root_path,
+            max_upload_size,
         })
     }
 }

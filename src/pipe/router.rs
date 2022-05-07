@@ -12,7 +12,7 @@ use crate::protocol::response::Response;
 use crate::protocol::NOT_SERVED;
 
 fn is_directory_locator(locator: String) -> bool {
-    locator.ends_with("/")
+    locator.ends_with('/')
 }
 
 pub async fn get_root_dir() -> Result<PathBuf> {

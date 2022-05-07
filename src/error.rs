@@ -26,7 +26,7 @@ pub struct Error {
 impl Error {
     pub fn new(kind: ErrorKind, msg: &str) -> Error {
         Error {
-            kind: kind,
+            kind,
             msg: msg.into(),
         }
     }

@@ -39,7 +39,7 @@ impl fmt::Display for Request {
 impl Request {
     /// Converts string to request
     fn try_parse_line(request: String) -> Result<Request> {
-        let tokens: Vec<&str> = request.split(" ").collect();
+        let tokens: Vec<&str> = request.split(' ').collect();
 
         // Request format "hostname SPACE full-locator SPACE post-data-lenght CRLF"
         // So first formal test - count of elements in request line
@@ -48,11 +48,11 @@ impl Request {
         } else {
             let host_str = tokens
                 .get(0)
-                .ok_or(Error::new_unexpected("Host lost from string"))?;
+                .ok_or_else(|| Error::new_unexpected("Host lost from string"))?;
 
             let locator_str = tokens
                 .get(1)
-                .ok_or(Error::new_unexpected("Locator lost from string"))?;
+                .ok_or_else(|| Error::new_unexpected("Locator lost from string"))?;
 
             let url = Url::parse(format!("spartan://{}{}", host_str, locator_str).as_str())
                 .map_err(|e| Error::new_request_error(e.to_string().as_str()))?;
@@ -63,7 +63,7 @@ impl Request {
 
             let size_value: usize = tokens
                 .get(2)
-                .ok_or(Error::new_unexpected("Data len lost from string"))?
+                .ok_or_else(|| Error::new_unexpected("Data len lost from string"))?
                 .to_string()
                 .parse::<usize>()
                 .map_err(|_| Error::new_request_error(PARSE_ERR))?;
@@ -107,7 +107,7 @@ impl Request {
             ))
         } else {
             let mut model = self.clone();
-            model.data = Some(data.clone());
+            model.data = Some(data);
 
             Ok(model)
         }
@@ -182,7 +182,7 @@ fn create_from_request_line_body_contains_size() {
 fn append_data_empty_data_but_data_len_is_set() {
     let result = Request::create_from_request_line("host /addr 12".to_string())
         .and_then(|res| res.append_data(Bytes::new()));
-        
+
     assert!(result.is_err());
 }
 

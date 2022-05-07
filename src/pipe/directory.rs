@@ -33,9 +33,9 @@ async fn process_directory_list(host: String, locator: String) -> Result<Respons
             let name = file_name.to_str().unwrap();
 
             let line = if is_dir {
-                format!("=> {}{}/ <{}>\r\n", locator, encode(name).to_string(), name)
+                format!("=> {}{}/ <{}>\r\n", locator, encode(name), name)
             } else {
-                format!("=> {}{} {}\r\n", locator, encode(name).to_string(), name)
+                format!("=> {}{} {}\r\n", locator, encode(name), name)
             };
 
             let line_str = line.as_str();

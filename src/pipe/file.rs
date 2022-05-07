@@ -32,7 +32,7 @@ fn is_executable(path: PathBuf) -> bool {
 async fn process_cgi(path: PathBuf, request: Request) -> Result<Response> {
     debug!("Executed cgi: {}", path.to_string_lossy());
 
-    let data = request.data.unwrap_or(Bytes::new());
+    let data = request.data.unwrap_or_default();
 
     let result = io_err!(Command::new(path.clone())
         .stdin(Stdio::piped())
@@ -85,11 +85,9 @@ pub async fn process_file(request: Request) -> Result<Response> {
 
     if is_executable(file_path.clone()) {
         process_cgi(file_path, request).await
+    } else if request.data_len > 0 {
+        Ok(Response::new_client_error(NOT_ALLOWED.to_string()))
     } else {
-        if request.data_len > 0 {
-            Ok(Response::new_client_error(NOT_ALLOWED.to_string()))
-        } else {
-            process_plain_file(file_path).await
-        }
+        process_plain_file(file_path).await
     }
 }

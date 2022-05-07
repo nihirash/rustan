@@ -56,9 +56,9 @@ impl fmt::Display for Response {
 impl Response {
     pub fn new(status_code: StatusCode, status_line: String, content: Option<Bytes>) -> Response {
         Response {
-            status_code: status_code,
+            status_code,
             status_line,
-            content: content,
+            content,
         }
     }
 
